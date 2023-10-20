@@ -1,0 +1,124 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const app = express();
+const port = 3000;
+
+// Connect to MongoDB (Make sure MongoDB is running)
+mongoose.connect('mongodb://localhost:27017/books', { useNewUrlParser: true, useUnifiedTopology: true });
+
+// Define a Book model
+const Book = mongoose.model('booksdata', {
+    _id:Number,
+    title: String,
+    author: String,
+    genre: String,
+    year: Number,
+});
+
+app.use(express.json());
+
+// Create some sample data in MongoDB
+Book.insertMany([
+  {
+    "_id":1,
+    "title": "The Great Gatsby",
+    "author": "F. Scott Fitzgerald",
+    "genre": "Fiction",
+    "year": 1925
+  },
+  {
+    "_id":2,
+    "title": "To Kill a Mockingbird",
+    "author": "Harper Lee",
+    "genre": "Fiction",
+    "year": 1960
+  },
+  {
+    "_id":3,
+    "title": "1984",
+    "author": "George Orwell",
+    "genre": "Dystopian",
+    "year": 1949
+  },
+  {
+    "_id":4,
+    "title": "Rich Dad Poor Dad",
+    "author": "Robert kiyosaki",
+    "genre": "Non-Fiction",
+    "year": 2000
+  },
+  {
+    "_id":5,
+    "title": "Wings On Fire",
+    "author": "A P J Abdul Kalam",
+    "genre": "Autobiography",
+    "year": 1997
+  }
+]);
+
+// Retrieve all books using GET
+app.get('/api/books', async (req, res) => {
+    try {
+        const books = await Book.find();
+        res.json(books);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// Retrieve a book by ID using GET
+app.get('/api/books/:id', async (req, res) => {
+    try {
+        const book = await Book.findById(req.params.id);
+        if (!book) {
+            res.status(404).json({ error: 'Book not found' });
+        } else {
+            res.json(book);
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// Add a new book
+app.post('/api/books', async (req, res) => {
+    try {
+        const book = new Book(req.body);
+        await book.save();
+        res.json(book);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// Update a book by ID
+app.put('/api/books/:id', async (req, res) => {
+    try {
+        const book = await Book.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!book) {
+            res.status(404).json({ error: 'Book not found' });
+        } else {
+            res.json(book);
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// Delete a book by ID
+app.delete('/api/books/:id', async (req, res) => {
+    try {
+        const book = await Book.findByIdAndRemove(req.params.id);
+        if (!book) {
+            res.status(404).json({ error: 'Book not found' });
+        } else {
+            res.json(book);
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+});
